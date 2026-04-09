@@ -23,7 +23,7 @@ function extractOrderPayload(order, shop) {
     customerPhone: phone,
     customerEmail: order.customer?.email || '',
     productName: products,
-    price: parseFloat(order.total_price || 0),
+    price: parseFloat(order.subtotal_price || order.total_price || 0),
     quantity,
     // Easy Client payload format
     easyClientPayload: {
@@ -32,7 +32,7 @@ function extractOrderPayload(order, shop) {
       email: order.customer?.email || '',
       orderId: order.name,
       product: products,
-      price: order.total_price,
+      price: order.subtotal_price || order.total_price,
       quantity,
     },
   };
@@ -79,7 +79,7 @@ function extractCheckoutPayload(checkout, shop) {
     customerPhone: phone,
     customerEmail: checkout.customer?.email || checkout.email || '',
     productName: products,
-    price: parseFloat(checkout.total_price || 0),
+    price: parseFloat(checkout.subtotal_price || checkout.total_price || 0),
     quantity,
     easyClientPayload: {
       name: customerName.trim(),
@@ -87,7 +87,7 @@ function extractCheckoutPayload(checkout, shop) {
       email: checkout.customer?.email || checkout.email || '',
       checkoutId: checkout.token,
       product: products,
-      price: checkout.total_price,
+      price: checkout.subtotal_price || checkout.total_price,
       quantity,
     },
   };
