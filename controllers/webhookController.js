@@ -35,7 +35,7 @@ async function orderPaid(req, res) {
     await Order.updateStatus(shop, order.name, 'paid');
     await Log.create(shop, 'order_paid', order, 'received');
 
-    const data = extractOrderPayload(order, shop);
+    const data = webhookService.extractOrderPayload(order, shop);
     await sendToEasyClient(shop, {
       ...data.easyClientPayload,
       event: 'payment_success',
@@ -71,7 +71,7 @@ async function orderCancelled(req, res) {
     await Order.updateStatus(shop, order.name, 'cancelled');
     await Log.create(shop, 'order_cancelled', order, 'received');
 
-    const data = extractOrderPayload(order, shop);
+    const data = webhookService.extractOrderPayload(order, shop);
     await sendToEasyClient(shop, {
       ...data.easyClientPayload,
       event: 'order_cancelled',
