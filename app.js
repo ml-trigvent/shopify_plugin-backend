@@ -59,7 +59,7 @@ app.get('/', async (req, res) => {
 });
 
 // Temporary: Admin endpoint to delete + re-register all webhooks to Render
-app.post('/admin/re-register-webhooks', async (req, res) => {
+app.post('/admin/re-register', async (req, res) => {
   const { shop, renderUrl } = req.body;
   if (!shop || !renderUrl) return res.status(400).json({ error: 'shop and renderUrl required' });
 
@@ -79,23 +79,27 @@ app.post('/admin/re-register-webhooks', async (req, res) => {
       await axios.delete(`${base}/webhooks/${wh.id}.json`, { headers });
     }
 
-    // Re-register to Render
+    // Re-register to the given renderUrl
     const topics = [
-      'orders/create', 'orders/updated', 'orders/paid', 'orders/cancelled',
-      'fulfillments/create', 'checkouts/create', 'checkouts/update',
-      'carts/create', 'carts/update',
+      { topic: 'orders/create', path: '/webhook/orders/create' },
+      { topic: 'orders/updated', path: '/webhook/orders/updated' },
+      { topic: 'orders/paid', path: '/webhook/orders/paid' },
+      { topic: 'orders/cancelled', path: '/webhook/orders/cancelled' },
+      { topic: 'fulfillments/create', path: '/webhook/fulfillments/create' },
+      { topic: 'checkouts/create', path: '/webhook/checkouts/create' },
+      { topic: 'checkouts/update', path: '/webhook/checkouts/update' },
+      { topic: 'carts/create', path: '/webhook/carts/create' },
+      { topic: 'carts/update', path: '/webhook/carts/update' },
     ];
     const results = [];
-    for (const topic of topics) {
-      const path = '/webhook/' + topic.replace('/', 's/').replace('orders/s/', 'orders/');
-      const address = `${renderUrl}/webhook/${topic.replace('/', '/')}`;
+    for (const wh of topics) {
       try {
         const r = await axios.post(`${base}/webhooks.json`,
-          { webhook: { topic, address: `${renderUrl}/webhook/${topic.split('/')[0]}s/${topic.split('/')[1]}`, format: 'json' } },
+          { webhook: { topic: wh.topic, address: `${renderUrl}${wh.path}`, format: 'json' } },
           { headers });
-        results.push({ topic, status: 'registered', id: r.data.webhook.id, address: r.data.webhook.address });
+        results.push({ topic: wh.topic, status: 'ok', address: r.data.webhook.address });
       } catch (e) {
-        results.push({ topic, status: 'failed', error: e.response?.data || e.message });
+        results.push({ topic: wh.topic, status: 'failed', error: e.response?.data || e.message });
       }
     }
 
