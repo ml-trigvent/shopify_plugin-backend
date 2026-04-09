@@ -8,7 +8,7 @@ class Order {
       price, quantity,
     } = data;
 
-    await db.execute(
+    await db.query(
       `INSERT INTO orders
        (shop_domain, shopify_order_id, customer_name, customer_phone,
         customer_email, product_name, price, quantity, status)
@@ -19,7 +19,7 @@ class Order {
   }
 
   static async updateStatus(shopDomain, shopifyOrderId, status) {
-    await db.execute(
+    await db.query(
       `UPDATE orders SET status = ?, updated_at = NOW()
        WHERE shop_domain = ? AND shopify_order_id = ?`,
       [status, shopDomain, shopifyOrderId]
@@ -27,7 +27,7 @@ class Order {
   }
 
   static async updateTracking(shopDomain, shopifyOrderId, trackingNumber) {
-    await db.execute(
+    await db.query(
       `UPDATE orders SET status = 'shipped', tracking_number = ?, updated_at = NOW()
        WHERE shop_domain = ? AND shopify_order_id = ?`,
       [trackingNumber, shopDomain, shopifyOrderId]
@@ -35,7 +35,7 @@ class Order {
   }
 
   static async findByShop(shopDomain, limit = 50) {
-    const [rows] = await db.execute(
+    const [rows] = await db.query(
       `SELECT * FROM orders WHERE shop_domain = ?
        ORDER BY created_at DESC LIMIT ?`,
       [shopDomain, Number(limit)]
@@ -44,12 +44,12 @@ class Order {
   }
 
   static async findById(id) {
-    const [rows] = await db.execute('SELECT * FROM orders WHERE id = ?', [id]);
+    const [rows] = await db.query('SELECT * FROM orders WHERE id = ?', [id]);
     return rows[0] || null;
   }
 
   static async getStats(shopDomain) {
-    const [rows] = await db.execute(
+    const [rows] = await db.query(
       `SELECT
          COUNT(*) as total,
          SUM(CASE WHEN status = 'placed' THEN 1 ELSE 0 END) as placed,
