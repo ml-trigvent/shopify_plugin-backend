@@ -53,7 +53,7 @@ app.get('/', async (req, res) => {
   res.json({
     status: 'ok',
     message: 'Shopify Easy Client Plugin API',
-    version: '1.0.0',
+    version: '1.1.0',
     synced_shop: shop || 'none'
   });
 });
