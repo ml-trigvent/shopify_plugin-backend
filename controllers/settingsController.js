@@ -50,15 +50,24 @@ async function getSettings(req, res) {
 
 // GET /api/logs?shop=xxx
 async function getLogs(req, res) {
-  let { shop } = req.query;
+  let { shop, page = 1, limit = 10 } = req.query;
   // Handle array if duplicated
   if (Array.isArray(shop)) shop = shop[0];
 
   if (!shop) return res.status(400).json({ error: 'shop is required' });
 
   try {
-    const logs = await Log.findByShop(shop);
-    res.json({ success: true, data: logs });
+    const logsData = await Log.findByShop(shop, page, limit);
+    res.json({ 
+      success: true, 
+      data: logsData.data,
+      pagination: {
+        total: logsData.total,
+        page: logsData.page,
+        limit: logsData.limit,
+        totalPages: logsData.totalPages
+      }
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
