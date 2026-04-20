@@ -9,19 +9,25 @@ class Log {
     );
   }
 
-  static async findByShop(shopDomain, page = 1, limit = 10) {
+  static async findByShop(shopDomain, page = 1, limit = 10, search = '') {
     const offset = (Number(page) - 1) * Number(limit);
-    const [rows] = await db.query(
-      `SELECT id, shop_domain, event_type, payload, status, response, created_at
-       FROM logs WHERE shop_domain = ?
-       ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [shopDomain, Number(limit), Number(offset)]
-    );
+    let query = `SELECT id, shop_domain, event_type, payload, status, response, created_at FROM logs WHERE shop_domain = ?`;
+    let countQuery = `SELECT COUNT(*) as total FROM logs WHERE shop_domain = ?`;
+    let params = [shopDomain];
+    let countParams = [shopDomain];
 
-    const [countRows] = await db.query(
-      `SELECT COUNT(*) as total FROM logs WHERE shop_domain = ?`,
-      [shopDomain]
-    );
+    if (search) {
+      query += ` AND (event_type LIKE ? OR payload LIKE ?)`;
+      countQuery += ` AND (event_type LIKE ? OR payload LIKE ?)`;
+      params.push(`%${search}%`, `%${search}%`);
+      countParams.push(`%${search}%`, `%${search}%`);
+    }
+
+    query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    params.push(Number(limit), Number(offset));
+
+    const [rows] = await db.query(query, params);
+    const [countRows] = await db.query(countQuery, countParams);
 
     return {
       data: rows,
@@ -30,6 +36,14 @@ class Log {
       limit: Number(limit),
       totalPages: Math.ceil(countRows[0].total / Number(limit))
     };
+  }
+
+  static async findById(id) {
+    const [rows] = await db.query(
+      'SELECT id, shop_domain, event_type, payload, status, response, created_at FROM logs WHERE id = ?',
+      [id]
+    );
+    return rows[0] || null;
   }
 
   static async updateStatus(id, status, response) {

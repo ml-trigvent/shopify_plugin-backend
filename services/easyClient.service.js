@@ -3,12 +3,21 @@ const Store = require('../models/Store');
 const Log = require('../models/Log');
 
 async function sendToEasyClient(shopDomain, payload) {
-  const apiKey = await Store.getEasyClientKey(shopDomain);
+  const config = await Store.getEasyClientConfig(shopDomain);
 
-  if (!apiKey) {
+  if (!config || !config.easy_client_api_key) {
     console.warn(`No Easy Client API key for shop: ${shopDomain}`);
     await Log.create(shopDomain, payload.event, payload, 'skipped', 'No API key configured');
     return { success: false, reason: 'No API key configured' };
+  }
+
+  const apiKey = config.easy_client_api_key;
+  const prefs = config.event_preferences || {};
+
+  if (prefs[payload.event] === false) {
+    console.log(`Skipping Event [${payload.event}] for shop: ${shopDomain} (User Preference)`);
+    await Log.create(shopDomain, payload.event, payload, 'skipped', 'Disabled in settings');
+    return { success: true, reason: 'Disabled in settings' };
   }
 
   if (!process.env.EASY_CLIENT_API_URL || process.env.EASY_CLIENT_API_URL.includes('api.easyclient.com')) {
