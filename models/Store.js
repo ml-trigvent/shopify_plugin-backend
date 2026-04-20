@@ -19,19 +19,26 @@ class Store {
     return this.findByDomain(shopDomain);
   }
 
-  static async updateEasyClientKey(shopDomain, apiKey) {
-    await db.query(
-      'UPDATE stores SET easy_client_api_key = ? WHERE shop_domain = ?',
-      [apiKey, shopDomain]
-    );
+  static async updateSettings(shopDomain, apiKey, preferences = null) {
+    if (apiKey) {
+      await db.query(
+        'UPDATE stores SET easy_client_api_key = ?, event_preferences = ? WHERE shop_domain = ?',
+        [apiKey, preferences ? JSON.stringify(preferences) : null, shopDomain]
+      );
+    } else {
+      await db.query(
+        'UPDATE stores SET event_preferences = ? WHERE shop_domain = ?',
+        [preferences ? JSON.stringify(preferences) : null, shopDomain]
+      );
+    }
   }
 
-  static async getEasyClientKey(shopDomain) {
+  static async getEasyClientConfig(shopDomain) {
     const [rows] = await db.query(
-      'SELECT easy_client_api_key FROM stores WHERE shop_domain = ?',
+      'SELECT easy_client_api_key, event_preferences FROM stores WHERE shop_domain = ?',
       [shopDomain]
     );
-    return rows[0]?.easy_client_api_key || null;
+    return rows[0] || null;
   }
 
   static async findAll() {

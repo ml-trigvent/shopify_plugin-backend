@@ -11,6 +11,9 @@ app.listen(PORT, async () => {
   console.log(` Running on http://localhost:${PORT}`);
   console.log('======================================');
 
+  // Start background processes
+  require('./services/cron.service').startCron();
+
   // Automatically sync webhooks for ALL stores on startup
   try {
     const stores = await Store.findAll();
